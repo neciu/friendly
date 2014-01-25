@@ -1,9 +1,3 @@
-function timeTick() {
-    console.log('tick!');
-}
-
-setInterval(timeTick, 500);
-
 if (Meteor.isClient) {
     Template.hello.greeting = function () {
         return "Welcome to friendly.";
@@ -16,20 +10,28 @@ if (Meteor.isClient) {
                 console.log("You pressed the button");
         }
     });
-}
 
-if (Meteor.isServer) {
-    Meteor.startup(function () {
-        // code to run on server at startup
+    Template.game.tileRows = function () {
+        var returnTiles = [];
 
-        if (Tiles.find().fetch().length == 0) {
-            const mapSize = 64;
-            for (var x = 0; x < mapSize; x++) {
-                for (var y = 0; y < mapSize; y++) {
-                    Tiles.insert({x: x, y: y});
-                    Meteor._debug('inserting tile (' + x + ', ' + y + ')');
-                }
-            }
-        }
-    });
+        var tileRows = TileRows.find();
+        tileRows.forEach(function (tileRow) {
+            var newTileRow = [];
+            tileRow.tiles.forEach(function (tileId) {
+                newTileRow.push(Tiles.findOne({_id: tileId}));
+            });
+            returnTiles.push(newTileRow);
+        });
+
+        return returnTiles;
+    };
+
+//    Tiles.find().observe({
+//        changed: function (tile) {
+//            console.log('changed!');
+//            var g = $('#game-canvas')[0].getContext('2d');
+//            g.fillStyle = 'rgb(150,29,28)';
+//            g.fillRect(tile.x*10, tile.y*10, 10, 10);
+//        }
+//    })
 }

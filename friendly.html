@@ -1,13 +1,27 @@
 <head>
-  <title>friendly</title>
+    <title>friendly</title>
 </head>
 
 <body>
-  {{> hello}}
+{{> hello}}
+
+{{> game}}
+
+<canvas id="game-canvas" width="200px" height="200px"></canvas>
+
 </body>
 
 <template name="hello">
-  <h1>Hello World!</h1>
-  {{greeting}}
-  <input type="button" value="Click" />
+    <h1>Hello World!</h1>
+    {{greeting}}
+    <input type="button" value="Click"/>
+
+    <br>
+    <br>
+    <br>
+    <br>
+</template>
+
+
+<template name="game">
 </template>
