@@ -1,4 +1,4 @@
-const tileSizeInPx = 4;
+const tileSizeInPx = 8;
 gameCanvasContext = null;
 player = null;
 
@@ -13,12 +13,7 @@ $(document).ready(function () {
         localStorage.setItem('player-id', player._id);
     });
 
-
     gameCanvasContext = $('#game-canvas')[0].getContext('2d');
-
-    Tiles.find().forEach(function (tile) {
-        drawTile(tile);
-    });
 
     $('body').keydown(function (event) {
         switch (event.keyCode) {
@@ -40,19 +35,22 @@ $(document).ready(function () {
                 break;
         }
     });
-
 });
 
+
 Meteor.startup(function () {
+    Tiles.find().forEach(function (tile) {
+        drawTile(tile);
+    });
 });
 
 function drawTile(tile) {
     if (tile.type === TILE_TYPE_EMPTY) {
-        gameCanvasContext.fillStyle = '#1BFF9A';
+        gameCanvasContext.fillStyle = '#0DFF90';
     } else if (tile.type === TILE_TYPE_TREASURE) {
-        gameCanvasContext.fillStyle = '#FF0000';
+        gameCanvasContext.fillStyle = '#E0FF34';
     } else if (tile.type === TILE_TYPE_PLAYER) {
-        gameCanvasContext.fillStyle = '#E8AE0C';
+        gameCanvasContext.fillStyle = '#4852FF';
     } else if (tile.type === TILE_TYPE_OBSTACLE) {
         gameCanvasContext.fillStyle = '#000000';
     } else {
@@ -68,4 +66,20 @@ Tiles.find().observe({
     }
 });
 
+setInterval(timeTick, 100);
+
+function timeTick() {
+    Meteor.call('keepAlive');
+//    console.log('tick!');
+}
+
+setInterval(drawAllTiles, 100);
+alreadyDrawn = false;
+function drawAllTiles() {
+    if (gameCanvasContext && !alreadyDrawn) {
+        Tiles.find().forEach(function (tile) {
+            drawTile(tile);
+        });
+    }
+}
 
