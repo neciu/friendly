@@ -1,5 +1,3 @@
-Tiles = new Meteor.Collection('tiles');
-
 TILE_TYPE_EMPTY = 0;
 TILE_TYPE_PLAYER = 1;
 TILE_TYPE_TREASURE = 2;

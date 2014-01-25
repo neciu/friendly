@@ -1,12 +1,3 @@
-setInterval(timeTick, 500);
-
-function timeTick() {
-//    Fiber(function () {
-//        clearOfflinePlayers();
-//    });
-//    console.log('tick!');
-}
-
 lastPlayerCheckTimestamp = new Date().getTime();
 const clearOffDuration = 2000;
 const kickTreshold = 4000;
@@ -22,8 +13,8 @@ function clearOfflinePlayers() {
             }
         });
         playersToKick.forEach(function (player) {
-            var tile = Tiles.findOne({_id: player.tileId});
-            Tiles.update(tile._id, {$set: {type: TILE_TYPE_EMPTY, playerId: null}});
+            var tile = tiles[player.tileY][player.tileX];
+            tile.type = TILE_TYPE_EMPTY;
             Players.remove(player._id);
         });
     }
@@ -44,7 +35,7 @@ function movePlayers() {
 }
 
 function movePlayer(player) {
-    var currentTile = Tiles.findOne({_id: player.tileId});
+    var currentTile = tiles[player.currentTile.y][player.currentTile.x];
     var nextX;
     var nextY;
     switch (player.direction) {
@@ -65,38 +56,43 @@ function movePlayer(player) {
             nextY = currentTile.y;
             break;
     }
-    var nextTile = Tiles.findOne({x: nextX, y: nextY});
-    if (nextTile && nextTile.type == TILE_TYPE_EMPTY) {
-        Tiles.update(nextTile._id, {$set: {type: TILE_TYPE_PLAYER, playerId: player._id}});
-        Tiles.update(currentTile._id, {$set: {type: TILE_TYPE_EMPTY, playerId: null}});
-        Players.update(player._id, {$set: {direction: MOVE_DIRECTION_NONE, tileId: nextTile._id}});
+    if (tiles[nextY][nextX] && tiles[nextY][nextX].type == TILE_TYPE_EMPTY) {
+        tiles[nextY][nextX].type = TILE_TYPE_PLAYER;
+        tiles[currentTile.y][currentTile.x].type = TILE_TYPE_EMPTY;
+        Players.update(player._id, {$set: {direction: MOVE_DIRECTION_NONE, previousTile: tiles[currentTile.y][currentTile.x], currentTile: tiles[nextY][nextX] }});
     }
 }
 
+const mapSize = 40;
+tiles = [];
+
 Meteor.startup(function () {
-//    Fiber = Npm.require('fibers');
-
-    // code to run on server at startup
-    if (Tiles.find().fetch().length == 0) {
-        const mapSize = 20;
-        for (var y = 0; y < mapSize; y++) {
-            var row = {y: y, tiles: []};
-            for (var x = 0; x < mapSize; x++) {
-                Meteor._debug('inserting tile (' + x + ', ' + y + ')');
-                var tileId = Tiles.insert({x: x, y: y, type: TILE_TYPE_EMPTY});
-                row.tiles.push(tileId);
-            }
-            TileRows.insert(row);
+    for (var y = 0; y < mapSize; y++) {
+        var row = [];
+        for (var x = 0; x < mapSize; x++) {
+            row.push({x: x, y: y, type: TILE_TYPE_EMPTY});
         }
+        tiles.push(row);
 
-        const numberOfTreasures = 10;
-        for (var i = 0; i < numberOfTreasures; i++) {
-            var emptyTiles = Tiles.find({type: TILE_TYPE_EMPTY}).fetch();
-            var selectedTile = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
-            Tiles.update(selectedTile._id, {$set: {type: TILE_TYPE_TREASURE}});
-        }
+    }
+
+    const numberOfTreasures = 10;
+    for (var i = 0; i < numberOfTreasures; i++) {
+        var tile = randomEmptyTile();
+        tile.type = TILE_TYPE_TREASURE;
     }
 });
+
+function randomEmptyTile() {
+    var x = Math.floor(Math.random() * mapSize);
+    var y = Math.floor(Math.random() * mapSize);
+    var tile = tiles[y][x];
+    if (tile.type != TILE_TYPE_EMPTY) {
+        return randomEmptyTile();
+    } else {
+        return tile;
+    }
+}
 
 Meteor.methods({
     keepAlive: function () {
@@ -113,14 +109,19 @@ Meteor.methods({
         if (!player) {
             var newPlayerId = Players.insert({});
             player = Players.findOne({_id: newPlayerId});
-            var emptyTiles = Tiles.find({type: TILE_TYPE_EMPTY}).fetch();
-            var selectedTile = emptyTiles[Math.floor(Math.random() * emptyTiles.length)];
-            Tiles.update(selectedTile._id, {$set: {type: TILE_TYPE_PLAYER, playerId: player._id}});
-            Players.update(player._id, {$set: {tileId: selectedTile._id}});
+
+            var tile = randomEmptyTile();
+            tile.type = TILE_TYPE_PLAYER;
+
+            Players.update(player._id, {$set: {previousTile: tile, currentTile: tile} });
         }
 
         this.setUserId(player._id);
         return player;
+    },
+    getTiles: function () {
+        console.log('get tiles with id: ' + this.userId);
+        return tiles;
     },
     move: function (direction) {
         Players.update(this.userId, {$set: {direction: direction}});

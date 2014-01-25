@@ -1,6 +1,7 @@
-const tileSizeInPx = 8;
+const tileSizeInPx = 12;
 gameCanvasContext = null;
 player = null;
+keyDown = false;
 
 $(document).ready(function () {
     console.log('ready');
@@ -16,24 +17,32 @@ $(document).ready(function () {
     gameCanvasContext = $('#game-canvas')[0].getContext('2d');
 
     $('body').keydown(function (event) {
-        switch (event.keyCode) {
-            case 37:
-                Meteor.call('move', MOVE_DIRECTION_LEFT, function (error, result) {
-                });
-                break;
-            case 38:
-                Meteor.call('move', MOVE_DIRECTION_UP, function (error, result) {
-                });
-                break;
-            case 40:
-                Meteor.call('move', MOVE_DIRECTION_DOWN, function (error, result) {
-                });
-                break;
-            case 39:
-                Meteor.call('move', MOVE_DIRECTION_RIGHT, function (error, result) {
-                });
-                break;
+        if (!keyDown) {
+            keyDown = true;
+
+            switch (event.keyCode) {
+                case 37:
+                    Meteor.call('move', MOVE_DIRECTION_LEFT, function (error, result) {
+                    });
+                    break;
+                case 38:
+                    Meteor.call('move', MOVE_DIRECTION_UP, function (error, result) {
+                    });
+                    break;
+                case 40:
+                    Meteor.call('move', MOVE_DIRECTION_DOWN, function (error, result) {
+                    });
+                    break;
+                case 39:
+                    Meteor.call('move', MOVE_DIRECTION_RIGHT, function (error, result) {
+                    });
+                    break;
+            }
         }
+    });
+
+    $('body').keyup(function (event) {
+        keyDown = false;
     });
 });
 
@@ -60,9 +69,10 @@ function drawTile(tile) {
     gameCanvasContext.fillRect(tile.x * tileSizeInPx, tile.y * tileSizeInPx, tileSizeInPx, tileSizeInPx);
 }
 
-Tiles.find().observe({
-    changed: function (tile) {
-        drawTile(tile);
+Players.find().observe({
+    changed: function (player) {
+        drawTile(player.currentTile);
+        drawTile(player.previousTile);
     }
 });
 
@@ -73,12 +83,17 @@ function timeTick() {
 //    console.log('tick!');
 }
 
-setInterval(drawAllTiles, 100);
+setInterval(drawAllTiles, 1000);
 alreadyDrawn = false;
 function drawAllTiles() {
-    if (gameCanvasContext && !alreadyDrawn) {
-        Tiles.find().forEach(function (tile) {
-            drawTile(tile);
+    if (gameCanvasContext) {
+        Meteor.call('getTiles', function (error, result) {
+            for (var y = 0; y < result.length; y++) {
+                var row = result[y];
+                for (var x = 0; x < row.length; x++) {
+                    drawTile(row[x]);
+                }
+            }
         });
     }
 }
