@@ -73,7 +73,15 @@ Meteor.startup(function () {
             row.push({x: x, y: y, type: TILE_TYPE_EMPTY});
         }
         tiles.push(row);
+    }
 
+    var map = doMap(mapSize);
+    for (var y = 0; y < mapSize; y++) {
+        for (var x = 0; x < mapSize; x++) {
+            if (map[y][x] != 0) {
+                tiles[y][x].type = TILE_TYPE_OBSTACLE;
+            }
+        }
     }
 
     const numberOfTreasures = 10;
