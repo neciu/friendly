@@ -75,7 +75,7 @@ function drawTile(tile, player) {
             gameCanvasContext.fillStyle = '#4852FF';
         }
     } else if (tile.type === TILE_TYPE_OBSTACLE) {
-        gameCanvasContext.fillStyle = '#B1B0B0';
+        gameCanvasContext.fillStyle = '#4E4E4E';
     } else if (tile.type === TILE_TYPE_TREE) {
         gameCanvasContext.fillStyle = '#002800';
     } else if (tile.type === TILE_TYPE_WALL) {
