@@ -19,7 +19,8 @@ doMap = function (size) {
     var amountOfWalls = Math.floor(Math.random() * (seed + 1) + (seed / 2)); // 1/2 seed - 3/2 seed
     var amountOfTrees = Math.floor((seed * 2) - amountOfWalls) + 1; //2 * seed - walls
     var amountOfLakes = 1;
-    var amountOfRocks = Math.floor(Math.random() * (4 * seed + 1) + (2 * seed)); // 2seed - 4 seed
+    var amountOfRocks = Math.floor(Math.random() * (4 * seed + 1) + (2 * seed)); // 2seed - 4 seed;
+    var amountOfTreasure = seed;
     //walls
     for (i = 0; i < amountOfWalls; i++) {
         if (i % 2 == 0) {
@@ -79,6 +80,19 @@ doMap = function (size) {
         newmap[startx][starty] = 4;
     }
     console.log(newmap);
+
+    //treasure
+    for (i = 0; i < amountOfTreasure; ++ i)
+    {
+        do
+        {
+            startx = Math.floor(Math.random() * (size - 1) + 1); // 1 - size-1
+            starty = Math.floor(Math.random() * (size - 1) + 1);
+        }
+        while ((newmap[startx][starty] != 0) || (newmap[startx-1][starty] != 0) || (newmap[startx][starty-1] != 0) || (newmap[startx+1][starty] != 0) || (newmap[startx][starty+1] != 0));
+
+        newmap[startx][starty] = 5;
+    }
 
     //Math.floor(Math.random()*(max-min+1)+min);
     return newmap;
