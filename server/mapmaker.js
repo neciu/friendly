@@ -1,3 +1,20 @@
+function addTreasure(amountOfTreasure, size, newmap)
+{
+    for (var i = 0; i < amountOfTreasure; ++ i)
+    {
+        do
+        {
+            var startx = Math.floor(Math.random() * (size - 1) + 1); // 1 - size-1
+            var starty = Math.floor(Math.random() * (size - 1) + 1);
+        }
+        while ((newmap[startx][starty] != 0) || (newmap[startx-1][starty] != 0) || (newmap[startx][starty-1] != 0) || (newmap[startx+1][starty] != 0) || (newmap[startx][starty+1] != 0));
+
+        newmap[startx][starty] = 5;
+    }
+    return newmap;
+};
+
+
 doMap = function (size) {
     //0 - grass
     //1 - tree
@@ -82,18 +99,10 @@ doMap = function (size) {
     console.log(newmap);
 
     //treasure
-    for (i = 0; i < amountOfTreasure; ++ i)
-    {
-        do
-        {
-            startx = Math.floor(Math.random() * (size - 1) + 1); // 1 - size-1
-            starty = Math.floor(Math.random() * (size - 1) + 1);
-        }
-        while ((newmap[startx][starty] != 0) || (newmap[startx-1][starty] != 0) || (newmap[startx][starty-1] != 0) || (newmap[startx+1][starty] != 0) || (newmap[startx][starty+1] != 0));
-
-        newmap[startx][starty] = 5;
-    }
+    addTreasure (amountOfTreasure, size, newmap);
 
     //Math.floor(Math.random()*(max-min+1)+min);
     return newmap;
 };
+
+
