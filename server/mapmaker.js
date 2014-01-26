@@ -1,5 +1,6 @@
-function addTreasure(amountOfTreasure, size, newmap)
+function addTreasure(size, newmap)
 {
+    amountOfTreasure = Math.floor(size / 8) + 1
     for (var i = 0; i < amountOfTreasure; ++ i)
     {
         do
@@ -99,7 +100,7 @@ doMap = function (size) {
     console.log(newmap);
 
     //treasure
-    addTreasure (amountOfTreasure, size, newmap);
+    addTreasure (size, newmap);
 
     //Math.floor(Math.random()*(max-min+1)+min);
     return newmap;
