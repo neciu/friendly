@@ -95,10 +95,10 @@ Meteor.startup(function () {
         var tile = randomEmptyTile();
         tile.type = TILE_TYPE_TREASURE;
         Treasures.insert({
-            tile: tile,
-            diggingPlayers: [],
-            lastTimeNotDigged: new Date().getTime()
-        });
+                             tile: tile,
+                             diggingPlayers: [],
+                             lastTimeNotDigged: new Date().getTime()
+                         });
     }
 });
 
@@ -114,39 +114,44 @@ function randomEmptyTile() {
 }
 
 Meteor.methods({
-    keepAlive: function () {
-        if (this.userId) {
-            console.log('keep alive from: ' + this.userId);
-            Players.update(this.userId, {$set: {keepAliveTimeStamp: new Date().getTime()}});
-            clearOfflinePlayers();
-            movePlayers();
-            digTreasure();
-        }
-    },
-    logIn: function (playerId) {
-        console.log('player logging with id: ' + playerId);
-        var player = Players.findOne({_id: playerId});
-        if (!player) {
-            var newPlayerId = Players.insert({});
-            player = Players.findOne({_id: newPlayerId});
+                   keepAlive: function () {
+                       if (this.userId) {
+                           console.log('keep alive from: ' + this.userId);
+                           Players.update(this.userId, {$set: {keepAliveTimeStamp: new Date().getTime()}});
+                           clearOfflinePlayers();
+                           movePlayers();
+                           digTreasure();
+                       }
+                   },
+                   logIn: function (playerId) {
+                       console.log('player logging with id: ' + playerId);
+                       var player = Players.findOne({_id: playerId});
+                       if (!player) {
+                           var newPlayerId = Players.insert({});
+                           player = Players.findOne({_id: newPlayerId});
 
-            var tile = randomEmptyTile();
-            tile.type = TILE_TYPE_PLAYER;
+                           var tile = randomEmptyTile();
+                           tile.type = TILE_TYPE_PLAYER;
 
-            Players.update(player._id, {$set: {previousTile: tile, currentTile: tile, score: 0} });
-        }
+                           Players.update(player._id, {$set: {previousTile: tile, currentTile: tile, score: 0, hp: 3, fighting: false} });
+                       }
 
-        this.setUserId(player._id);
-        return player;
-    },
-    getTiles: function () {
-        console.log('get tiles with id: ' + this.userId);
-        return tiles;
-    },
-    move: function (direction) {
-        Players.update(this.userId, {$set: {direction: direction}});
-    }
-});
+                       this.setUserId(player._id);
+                       return player;
+                   },
+                   getTiles: function () {
+                       console.log('get tiles with id: ' + this.userId);
+                       return tiles;
+                   },
+                   move: function (direction) {
+                       Players.update(this.userId, {$set: {direction: direction}});
+                   },
+                   toggleFighting: function () {
+                       console.log('toggle1');
+                       var player = Players.findOne(this.userId);
+                       Players.update(this.userId, {$set: {fighting: !player.fighting}});
+                   },
+               });
 
 function digTreasure() {
     var currentTimeStamp = new Date().getTime();
@@ -173,16 +178,16 @@ function digTreasure() {
 
 function updatePlayersNearTreasure(treasure) {
     var diggingPlayers = [];
-    if (tiles[treasure.tile.y - 1][treasure.tile.x] && tiles[treasure.tile.y - 1][treasure.tile.x].type == TILE_TYPE_PLAYER) {
+    if (treasure.tile.y - 1 > 0 && tiles[treasure.tile.y - 1][treasure.tile.x].type == TILE_TYPE_PLAYER) {
         diggingPlayers.push(tiles[treasure.tile.y - 1][treasure.tile.x].playerId);
     }
-    if (tiles[treasure.tile.y + 1][treasure.tile.x] && tiles[treasure.tile.y + 1][treasure.tile.x].type == TILE_TYPE_PLAYER) {
+    if (treasure.tile.y + 1 < mapSize - 1 && tiles[treasure.tile.y + 1][treasure.tile.x].type == TILE_TYPE_PLAYER) {
         diggingPlayers.push(tiles[treasure.tile.y + 1][treasure.tile.x].playerId);
     }
-    if (tiles[treasure.tile.y][treasure.tile.x - 1] && tiles[treasure.tile.y][treasure.tile.x - 1].type == TILE_TYPE_PLAYER) {
+    if (treasure.tile.x - 1 > 0 && tiles[treasure.tile.y][treasure.tile.x - 1].type == TILE_TYPE_PLAYER) {
         diggingPlayers.push(tiles[treasure.tile.y][treasure.tile.x - 1].playerId);
     }
-    if (tiles[treasure.tile.y][treasure.tile.x + 1] && tiles[treasure.tile.y][treasure.tile.x + 1].type == TILE_TYPE_PLAYER) {
+    if (treasure.tile.x < mapSize - 1 && tiles[treasure.tile.y][treasure.tile.x + 1].type == TILE_TYPE_PLAYER) {
         diggingPlayers.push(tiles[treasure.tile.y][treasure.tile.x + 1].playerId);
     }
     Treasures.update(treasure._id, {$set: {

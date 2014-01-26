@@ -1,4 +1,4 @@
-const tileSizeInPx = 12;
+const tileSizeInPx = 6;
 gameCanvasContext = null;
 player = null;
 keyDown = false;
@@ -37,6 +37,10 @@ $(document).ready(function () {
                     Meteor.call('move', MOVE_DIRECTION_RIGHT, function (error, result) {
                     });
                     break;
+                case 32:
+                    Meteor.call('toggleFighting', function (error, result) {
+                    });
+                    break;
             }
         }
     });
@@ -49,17 +53,21 @@ $(document).ready(function () {
 
 Meteor.startup(function () {
     Tiles.find().forEach(function (tile) {
-        drawTile(tile);
+        drawTile(tile, null);
     });
 });
 
-function drawTile(tile) {
+function drawTile(tile, player) {
     if (tile.type === TILE_TYPE_EMPTY) {
         gameCanvasContext.fillStyle = '#0DFF90';
     } else if (tile.type === TILE_TYPE_TREASURE) {
         gameCanvasContext.fillStyle = '#E0FF34';
     } else if (tile.type === TILE_TYPE_PLAYER) {
-        gameCanvasContext.fillStyle = '#4852FF';
+        if (player && player.fighting) {
+            gameCanvasContext.fillStyle = '#FF0000';
+        } else {
+            gameCanvasContext.fillStyle = '#4852FF';
+        }
     } else if (tile.type === TILE_TYPE_OBSTACLE) {
         gameCanvasContext.fillStyle = '#000000';
     } else {
@@ -70,11 +78,11 @@ function drawTile(tile) {
 }
 
 Players.find().observe({
-    changed: function (player) {
-        drawTile(player.currentTile);
-        drawTile(player.previousTile);
-    }
-});
+                           changed: function (player) {
+                               drawTile(player.currentTile, player);
+                               drawTile(player.previousTile, null);
+                           }
+                       });
 
 setInterval(timeTick, 100);
 
