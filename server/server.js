@@ -58,13 +58,16 @@ function movePlayer(player) {
     }
     if (tiles[nextY][nextX] && tiles[nextY][nextX].type == TILE_TYPE_EMPTY) {
         tiles[nextY][nextX].type = TILE_TYPE_PLAYER;
+        tiles[nextY][nextX].playerId = player._id;
         tiles[currentTile.y][currentTile.x].type = TILE_TYPE_EMPTY;
+        tiles[currentTile.y][currentTile.x].playerId = null;
         Players.update(player._id, {$set: {direction: MOVE_DIRECTION_NONE, previousTile: tiles[currentTile.y][currentTile.x], currentTile: tiles[nextY][nextX] }});
     }
 }
 
 const mapSize = 40;
 tiles = [];
+const timeToDigTreasure = 5000;
 
 Meteor.startup(function () {
     for (var y = 0; y < mapSize; y++) {
@@ -84,10 +87,18 @@ Meteor.startup(function () {
         }
     }
 
+    Treasures.find().forEach(function (treasure) {
+        Treasures.remove(treasure._id);
+    });
     const numberOfTreasures = 10;
     for (var i = 0; i < numberOfTreasures; i++) {
         var tile = randomEmptyTile();
         tile.type = TILE_TYPE_TREASURE;
+        Treasures.insert({
+            tile: tile,
+            diggingPlayers: [],
+            lastTimeNotDigged: new Date().getTime()
+        });
     }
 });
 
@@ -109,6 +120,7 @@ Meteor.methods({
             Players.update(this.userId, {$set: {keepAliveTimeStamp: new Date().getTime()}});
             clearOfflinePlayers();
             movePlayers();
+            digTreasure();
         }
     },
     logIn: function (playerId) {
@@ -121,7 +133,7 @@ Meteor.methods({
             var tile = randomEmptyTile();
             tile.type = TILE_TYPE_PLAYER;
 
-            Players.update(player._id, {$set: {previousTile: tile, currentTile: tile} });
+            Players.update(player._id, {$set: {previousTile: tile, currentTile: tile, score: 0} });
         }
 
         this.setUserId(player._id);
@@ -135,5 +147,47 @@ Meteor.methods({
         Players.update(this.userId, {$set: {direction: direction}});
     }
 });
+
+function digTreasure() {
+    var currentTimeStamp = new Date().getTime();
+    Treasures.find().forEach(function (treasure) {
+        updatePlayersNearTreasure(treasure);
+        if (treasure.diggingPlayers.length != 2) {
+            Treasures.update(treasure._id, {$set: {
+                lastTimeNotDigged: currentTimeStamp
+            } });
+        } else {
+            if (currentTimeStamp - treasure.lastTimeNotDigged > timeToDigTreasure) {
+                var player = Players.findOne({_id: treasure.diggingPlayers[0]});
+                Players.update(player._id, {$set: {score: player.score + 1}});
+
+                player = Players.findOne({_id: treasure.diggingPlayers[1]});
+                Players.update(player._id, {$set: {score: player.score + 1}});
+
+                tiles[treasure.tile.y][treasure.tile.x].type = TILE_TYPE_EMPTY;
+                Treasures.remove(treasure._id);
+            }
+        }
+    });
+}
+
+function updatePlayersNearTreasure(treasure) {
+    var diggingPlayers = [];
+    if (tiles[treasure.tile.y - 1][treasure.tile.x] && tiles[treasure.tile.y - 1][treasure.tile.x].type == TILE_TYPE_PLAYER) {
+        diggingPlayers.push(tiles[treasure.tile.y - 1][treasure.tile.x].playerId);
+    }
+    if (tiles[treasure.tile.y + 1][treasure.tile.x] && tiles[treasure.tile.y + 1][treasure.tile.x].type == TILE_TYPE_PLAYER) {
+        diggingPlayers.push(tiles[treasure.tile.y + 1][treasure.tile.x].playerId);
+    }
+    if (tiles[treasure.tile.y][treasure.tile.x - 1] && tiles[treasure.tile.y][treasure.tile.x - 1].type == TILE_TYPE_PLAYER) {
+        diggingPlayers.push(tiles[treasure.tile.y][treasure.tile.x - 1].playerId);
+    }
+    if (tiles[treasure.tile.y][treasure.tile.x + 1] && tiles[treasure.tile.y][treasure.tile.x + 1].type == TILE_TYPE_PLAYER) {
+        diggingPlayers.push(tiles[treasure.tile.y][treasure.tile.x + 1].playerId);
+    }
+    Treasures.update(treasure._id, {$set: {
+        diggingPlayers: diggingPlayers
+    } });
+}
 
 

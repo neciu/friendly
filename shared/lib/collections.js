@@ -3,8 +3,8 @@ TILE_TYPE_PLAYER = 1;
 TILE_TYPE_TREASURE = 2;
 TILE_TYPE_OBSTACLE = 3;
 
-TileRows = new Meteor.Collection('tilerows');
 Players = new Meteor.Collection('players');
+Treasures = new Meteor.Collection('treasures');
 
 MOVE_DIRECTION_NONE = 0;
 MOVE_DIRECTION_UP = 1;
