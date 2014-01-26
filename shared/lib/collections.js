@@ -2,6 +2,8 @@ TILE_TYPE_EMPTY = 0;
 TILE_TYPE_PLAYER = 1;
 TILE_TYPE_TREASURE = 2;
 TILE_TYPE_OBSTACLE = 3;
+TILE_TYPE_TREE = 4;
+TILE_TYPE_WALL = 5;
 
 Players = new Meteor.Collection('players');
 Treasures = new Meteor.Collection('treasures');

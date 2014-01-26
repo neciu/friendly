@@ -124,10 +124,15 @@ Meteor.startup(function () {
     }
 
     var map = doMap(mapSize);
-    for (var y = 0; y < mapSize; y++) {
-        for (var x = 0; x < mapSize; x++) {
-            if (map[y][x] != 0) {
-                tiles[y][x].type = TILE_TYPE_OBSTACLE;
+    for (var y = 0; y < mapSize; y++)
+    {
+        for (var x = 0; x < mapSize; x++)
+        {
+            switch (map[y][x])
+            {
+                case 1: tiles[y][x].type = TILE_TYPE_TREE; break;
+                case 2: tiles[y][x].type = TILE_TYPE_WALL; break;
+                case 4: tiles[y][x].type = TILE_TYPE_OBSTACLE; break;
             }
         }
     }
@@ -135,7 +140,7 @@ Meteor.startup(function () {
     Treasures.find().forEach(function (treasure) {
         Treasures.remove(treasure._id);
     });
-    const numberOfTreasures = 10;
+    const numberOfTreasures = Math.floor(mapSize / 8) + 1;
     for (var i = 0; i < numberOfTreasures; i++) {
         var tile = randomEmptyTile();
         tile.type = TILE_TYPE_TREASURE;
