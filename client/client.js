@@ -1,4 +1,5 @@
 const tileSizeInPx = 6;
+mapSize = 20;
 gameCanvasContext = null;
 player = null;
 keyDown = false;
@@ -48,22 +49,27 @@ $(document).ready(function () {
     $('body').keyup(function (event) {
         keyDown = false;
     });
-});
 
-
-Meteor.startup(function () {
-    Tiles.find().forEach(function (tile) {
-        drawTile(tile, null);
+    $('#game-canvas')[0].width = $('#game-canvas')[0].height = window.innerHeight;
+    $(window).resize(function (e) {
+        $('#game-canvas')[0].width = $('#game-canvas')[0].height = window.innerHeight;
     });
 });
 
+
 function drawTile(tile, player) {
+    if (!gameCanvasContext) {
+        return;
+    }
+
     if (tile.type === TILE_TYPE_EMPTY) {
         gameCanvasContext.fillStyle = '#0DFF90';
     } else if (tile.type === TILE_TYPE_TREASURE) {
         gameCanvasContext.fillStyle = '#E0FF34';
     } else if (tile.type === TILE_TYPE_PLAYER) {
-        if (player && player.fighting) {
+        if (player && player.dead) {
+            gameCanvasContext.fillStyle = '#0DFF90';
+        } else if (player && player.fighting) {
             gameCanvasContext.fillStyle = '#FF0000';
         } else {
             gameCanvasContext.fillStyle = '#4852FF';
@@ -73,8 +79,9 @@ function drawTile(tile, player) {
     } else {
         return;
     }
+    tileSize = $('#game-canvas')[0].width / mapSize;
 
-    gameCanvasContext.fillRect(tile.x * tileSizeInPx, tile.y * tileSizeInPx, tileSizeInPx, tileSizeInPx);
+    gameCanvasContext.fillRect(tile.x * tileSize, tile.y * tileSize, tileSize, tileSize);
 }
 
 Players.find().observe({
@@ -96,6 +103,7 @@ alreadyDrawn = false;
 function drawAllTiles() {
     if (gameCanvasContext) {
         Meteor.call('getTiles', function (error, result) {
+            mapSize = result.length;
             for (var y = 0; y < result.length; y++) {
                 var row = result[y];
                 for (var x = 0; x < row.length; x++) {

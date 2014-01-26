@@ -3,23 +3,21 @@
 </head>
 
 <body>
-{{> game}}
-
-<canvas id="game-canvas" width="300px" height="300px"></canvas>
-
+<div style="float: left">
+    <canvas id="game-canvas" width="300px" height="300px"></canvas>
+</div>
+<div style="float: left">
+    {{> game}}
+</div>
 </body>
-
-<template name="hello">
-    <h1>Hello World!</h1>
-    {{greeting}}
-    <input type="button" value="Click"/>
-
-    <br>
-    <br>
-    <br>
-    <br>
-</template>
 
 
 <template name="game">
+    <h1>SCORE: {{myScore}}</h1>
+    <h2>Table of scores:</h2>
+    <ul>
+        {{#each players }}
+        <li>{{ score }} {{#if dead}}<b>DEAD</b>{{/if}}</li>
+        {{/each }}
+    </ul>
 </template>

@@ -13,7 +13,7 @@ function clearOfflinePlayers() {
             }
         });
         playersToKick.forEach(function (player) {
-            var tile = tiles[player.tileY][player.tileX];
+            var tile = tiles[player.currentTile.y][player.currentTile.x];
             tile.type = TILE_TYPE_EMPTY;
             Players.remove(player._id);
         });
@@ -27,11 +27,56 @@ function movePlayers() {
     if (currentTimeStamp - lastMoveTimestamp > moveDuration) {
         lastMoveTimestamp = currentTimeStamp;
         Players.find().forEach(function (player) {
-            if (player.direction) {
+            if (!player.dead && player.direction) {
                 movePlayer(player);
             }
         });
+        killPlayers();
+        respawnPlayers();
     }
+}
+function killPlayers() {
+    Players.find().forEach(function (player) {
+        if (player.fighting) {
+            var playerIds = [];
+            if (player.currentTile.y - 1 > 0 && tiles[player.currentTile.y - 1][player.currentTile.x].type == TILE_TYPE_PLAYER) {
+                playerIds.push(tiles[player.currentTile.y - 1][player.currentTile.x].playerId);
+            }
+            if (player.currentTile.y + 1 < mapSize - 1 && tiles[player.currentTile.y + 1][player.currentTile.x].type == TILE_TYPE_PLAYER) {
+                playerIds.push(tiles[player.currentTile.y + 1][player.currentTile.x].playerId);
+            }
+            if (player.currentTile.x - 1 > 0 && tiles[player.currentTile.y][player.currentTile.x - 1].type == TILE_TYPE_PLAYER) {
+                playerIds.push(tiles[player.currentTile.y][player.currentTile.x - 1].playerId);
+            }
+            if (player.currentTile.x < mapSize - 1 && tiles[player.currentTile.y][player.currentTile.x + 1].type == TILE_TYPE_PLAYER) {
+                playerIds.push(tiles[player.currentTile.y][player.currentTile.x + 1].playerId);
+            }
+            playerIds.forEach(function (playerId) {
+                console.log(playerId);
+                var playerToHit = Players.findOne(playerId);
+                console.log(playerToHit);
+                if (playerToHit.hp - 1 < 1) {
+                    tiles[playerToHit.currentTile.y][playerToHit.currentTile.x].type = TILE_TYPE_EMPTY;
+                    Players.update(playerId, {$set: {hp: 0, dead: true, deadSince: new Date().getTime()}});
+                } else {
+                    Players.update(playerId, {$set: {hp: playerToHit.hp - 1}});
+                }
+            });
+        }
+    });
+}
+
+const respawnTime = 10000;
+function respawnPlayers() {
+    var currentTimeStamp = new Date().getTime();
+    Players.find({dead: true}).forEach(function (player) {
+        if (currentTimeStamp - player.deadSince > respawnTime) {
+            var tile = randomEmptyTile();
+            tile.type = TILE_TYPE_PLAYER;
+
+            Players.update(player._id, {$set: {previousTile: tile, currentTile: tile, hp: 3, fighting: false, dead: false} });
+        }
+    });
 }
 
 function movePlayer(player) {
